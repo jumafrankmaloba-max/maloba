@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maloba cuizine Pizza Recipe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI',Nairobi, Geneva, funyula, sans-serif; ;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-content {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .description {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .pizza-img {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 5px solid white;
+        }
+        
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        section {
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #e74c3c;
+            border-bottom: 2px solid #e74c3c;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-icon {
+            font-size: 1.5rem;
+            color: #e74c3c;
+            margin-right: 10px;
+            width: 30px;
+            text-align: center;
+        }
+        
+        ul, ol {
+            margin-left: 20px;
+            padding-left: 10px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+        
+        .ingredient-img {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tips {
+            background: #fff8e1;
+            padding: 20px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .nutrition {
+            background: #e8f5e9;
+            padding: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .nutrition-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #ccc;
+            padding: 5px 0;
+        }
+        
+        .source {
+            text-align: center;
+            padding: 20px;
+            background: #f5f5f5;
+            font-style: italic;
+            color: #777;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+        }
+        
+        /* Text formatting examples */
+        .highlight {
+            background-color: #ffeb3b;
+            padding: 0 4px;
+        }
+        
+        .important {
+            font-weight: bold;
+            color: #c0392b;
+        }
+        
+        .emphasis {
+            font-style: italic;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Classic Margherita Pizza</h1>
+                <p class="description">Authentic Italian pizza with simple, fresh ingredients that highlight the beautiful flavors of tomatoes, mozzarella, and basil.</p>
+                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                     alt="Delicious Margherita Pizza with fresh basil" 
+                     class="pizza-img"
+                     width="800">
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="left-column">
+                <!-- Recipe Information Section -->
+                <section class="recipe-info">
+                    <h2>Recipe Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-icon">⏱</span>
+                            <div>
+                                <strong>Prep time:</strong> 20 minutes
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">🔥</span>
+                            <div>
+                                <strong>Cook time:</strong> 10-12 minutes
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">🍕</span>
+                            <div>
+                                <strong>Servings:</strong> 2 pizzas (4 servings)
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">📊</span>
+                            <div>
+                                <strong>Difficulty:</strong> <em>Intermediate</em>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Ingredients Section -->
+                <section class="ingredients">
+                    <h2>Ingredients</h2>
+                    <ul>
+                        <li><strong>Pizza Dough:</strong> 500g (about 4 cups) bread flour</li>
+                        <li><strong>Water:</strong> 325ml (1⅓ cups) lukewarm</li>
+                        <li><strong>Yeast:</strong> 7g (2¼ tsp) active dry yeast</li>
+                        <li><strong>Salt:</strong> 10g (2 tsp) fine sea salt</li>
+                        <li><strong>Olive Oil:</strong> 2 tbsp extra virgin</li>
+                        <li><strong>Tomato Sauce:</strong> 1 cup San Marzano tomatoes, crushed</li>
+                        <li><strong>Mozzarella:</strong> 200g fresh, sliced</li>
+                        <li><strong>Basil:</strong> 1 cup fresh leaves</li>
+                        <li><strong>Garlic:</strong> 2 cloves, minced</li>
+                        <li><strong>Parmesan:</strong> ¼ cup freshly grated</li>
+                    </ul>
+                    <img src="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" 
+                         alt="Pizza ingredients including flour, tomatoes, cheese, and basil" 
+                         class="ingredient-img"
+                         width="400">
+                </section>
+            </div>
+            
+            <div class="right-column">
+                <!-- Instructions Section -->
+                <section class="instructions">
+                    <h2>Instructions</h2>
+                    <ol>
+                        <li><strong>Prepare dough:</strong> Combine flour, yeast, and salt. Add water and olive oil, mix until dough forms.</li>
+                        <li><mark>Knead dough</mark> on floured surface for 10 minutes until smooth and elastic.</li>
+                        <li>Place dough in oiled bowl, cover, and let rise for 1-2 hours until doubled.</li>
+                        <li>Preheat oven to <u>500°F (260°C)</u> with pizza stone if available.</li>
+                        <li>Divide dough into two balls. Roll out each to 12-inch circles on floured surface.</li>
+                        <li>Spread tomato sauce, leaving border. Top with mozzarella, garlic, and half the basil.</li>
+                        <li>Bake for 10-12 minutes until crust is golden and cheese is bubbly.</li>
+                        <li>Top with remaining basil, drizzle with olive oil, and sprinkle with Parmesan.</li>
+                        <li>Let rest for 5 minutes before slicing and serving.</li>
+                    </ol>
+                </section>
+                
+                <!-- Tips Section -->
+                <section class="tips">
+                    <h2>Tips & Notes</h2>
+                    <ul>
+                        <li>For best results, use <span class="highlight">00 flour</span> which creates a lighter, crispier crust</li>
+                        <li>Don't overload with toppings - Margherita is about <em>simplicity</em></li>
+                        <li>If using dry yeast, activate in warm water with sugar before adding</li>
+                        <li>Let dough rest at room temperature for 30 minutes before shaping</li>
+                        <li>For extra flavor, add a sprinkle of oregano to the tomato sauce</li>
+                    </ul>
+                </section>
+                
+                <!-- Nutrition Section -->
+                <section class="nutrition">
+                    <h2>Nutrition Facts</h2>
+                    <p>Per serving (1/4 pizza):</p>
+                    <div class="nutrition-grid">
+                        <div class="nutrition-item">
+                            <span>Calories</span>
+                            <span>850 kcal</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Carbs</span>
+                            <span>95g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Protein</span>
+                            <span>35g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Fat</span>
+                            <span>35g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Saturated Fat</span>
+                            <span>15g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Fiber</span>
+                            <span>5g</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+        
+        <div class="source">
+            <p>Recipe inspired by traditional Neapolitan pizza techniques. Source: <a href="https://www.pizzamaking.com/forum/index.php" target="_blank">Pizza Making Forum</a></p>
+        </div>
+        
+        <footer>
+            <p> Maloba cuizine Italian Recipes | HTML Recipe Assignment</p>
+        </footer>
+    </div>
+</body>
+</html>
