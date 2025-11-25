@@ -1,0 +1,20 @@
+import React from "react";
+
+// Provided range function
+function range(n) {
+  return [...Array(n).keys()];
+}
+
+export default function Grid({ numRows, numCols }) {
+  return (
+    <div className="grid">
+      {range(numRows).map((rowIndex) => (
+        <div className="row" key={`row-${rowIndex}`}>
+          {range(numCols).map((colIndex) => (
+            <div className="cell" key={`cell-${rowIndex}-${colIndex}`}></div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
