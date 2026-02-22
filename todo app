@@ -1,0 +1,757 @@
+todo-app/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── layout/
+│   │   ├── todo/
+│   │   └── common/
+│   ├── hooks/
+│   ├── pages/
+│   ├── services/
+│   ├── utils/
+│   ├── types/
+│   └── App.tsx
+├── package.json
+└── README.md
+
+
+{
+  "name": "todo-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-router": "^1.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@tanstack/react-query-devtools": "^5.0.0",
+    "@tanstack/react-form": "^0.29.0",
+    "axios": "^1.6.0",
+    "tailwindcss": "^3.4.0",
+    "@radix-ui/react-slot": "^1.0.0",
+    "@radix-ui/react-dialog": "^1.0.0",
+    "lucide-react": "^0.400.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}
+
+
+// src/services/api.ts
+import axios from 'axios';
+
+const API_BASE_URL = 'https://api.oluwasetemi.dev';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor for auth
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  completed: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userId?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateTodoData {
+  title: string;
+  description?: string;
+}
+
+export interface UpdateTodoData {
+  title?: string;
+  description?: string;
+  completed?: boolean;
+}
+
+// Todo API functions
+export const todoApi = {
+  getTodos: async (page = 1, limit = 10, search?: string): Promise<PaginatedResponse<Todo>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+    });
+    const response = await api.get(`/todos?${params}`);
+    return response.data;
+  },
+
+  getTodo: async (id: string): Promise<Todo> => {
+    const response = await api.get(`/todos/${id}`);
+    return response.data;
+  },
+
+  createTodo: async (data: CreateTodoData): Promise<Todo> => {
+    const response = await api.post('/todos', data);
+    return response.data;
+  },
+
+  updateTodo: async (id: string, data: UpdateTodoData): Promise<Todo> => {
+    const response = await api.put(`/todos/${id}`, data);
+    return response.data;
+  },
+
+  deleteTodo: async (id: string): Promise<void> => {
+    await api.delete(`/todos/${id}`);
+  },
+};
+
+// Auth API functions
+export const authApi = {
+  register: async (email: string, password: string, name: string) => {
+    const response = await api.post('/auth/register', { email, password, name });
+    return response.data;
+  },
+
+  login: async (email: string, password: string) => {
+    const response = await api.post('/auth/login', { email, password });
+    if (response.data.token) {
+      localStorage.setItem('auth_token', response.data.token);
+    }
+    return response.data;
+  },
+
+  logout: async () => {
+    await api.post('/auth/logout');
+    localStorage.removeItem('auth_token');
+  },
+
+  getMe: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
+};
+
+
+// src/hooks/useTodos.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { todoApi, Todo, CreateTodoData, UpdateTodoData } from '../services/api';
+
+export const useTodos = (page = 1, search?: string, filter?: 'all' | 'completed' | 'incomplete') => {
+  return useQuery({
+    queryKey: ['todos', page, search, filter],
+    queryFn: () => todoApi.getTodos(page, 10, search),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useTodo = (id: string) => {
+  return useQuery({
+    queryKey: ['todo', id],
+    queryFn: () => todoApi.getTodo(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateTodo = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: CreateTodoData) => todoApi.createTodo(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+};
+
+export const useUpdateTodo = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateTodoData }) => 
+      todoApi.updateTodo(id, data),
+    onSuccess: (updatedTodo) => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+      queryClient.setQueryData(['todo', updatedTodo.id], updatedTodo);
+    },
+  });
+};
+
+export const useDeleteTodo = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (id: string) => todoApi.deleteTodo(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
+};
+
+
+// src/components/ui/Button.tsx
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { clsx } from 'clsx';
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'default', size = 'default', asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return (
+      <Comp
+        className={clsx(
+          'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          {
+            'bg-primary text-primary-foreground hover:bg-primary/90': variant === 'default',
+            'bg-destructive text-destructive-foreground hover:bg-destructive/90': variant === 'destructive',
+            'border border-input bg-background hover:bg-accent hover:text-accent-foreground': variant === 'outline',
+            'bg-secondary text-secondary-foreground hover:bg-secondary/80': variant === 'secondary',
+            'hover:bg-accent hover:text-accent-foreground': variant === 'ghost',
+            'text-primary underline-offset-4 hover:underline': variant === 'link',
+            'h-10 px-4 py-2': size === 'default',
+            'h-9 rounded-md px-3': size === 'sm',
+            'h-11 rounded-md px-8': size === 'lg',
+            'h-10 w-10': size === 'icon',
+          },
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+
+Button.displayName = 'Button';
+
+export { Button };
+
+
+// src/components/todo/TodoList.tsx
+import React, { Suspense } from 'react';
+import { useTodos } from '../../hooks/useTodos';
+import { TodoCard } from './TodoCard';
+import { TodoListSkeleton } from './TodoListSkeleton';
+import { Pagination } from '../common/Pagination';
+import { SearchBar } from '../common/SearchBar';
+import { FilterTabs } from '../common/FilterTabs';
+
+interface TodoListProps {
+  page: number;
+  search?: string;
+  filter?: 'all' | 'completed' | 'incomplete';
+  onPageChange: (page: number) => void;
+  onSearchChange: (search: string) => void;
+  onFilterChange: (filter: 'all' | 'completed' | 'incomplete') => void;
+}
+
+export const TodoList: React.FC<TodoListProps> = ({
+  page,
+  search,
+  filter,
+  onPageChange,
+  onSearchChange,
+  onFilterChange,
+}) => {
+  const { data, isLoading, error } = useTodos(page, search, filter);
+
+  if (error) {
+    throw error; // This will be caught by ErrorBoundary
+  }
+
+  if (isLoading) {
+    return <TodoListSkeleton />;
+  }
+
+  if (!data?.data.length) {
+    return (
+      <div className="text-center py-12">
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No todos found</h3>
+        <p className="text-gray-500">
+          {search ? 'Try adjusting your search' : 'Create your first todo to get started'}
+        </p>
+      </div>
+    );
+  }
+
+  const filteredTodos = data.data.filter(todo => {
+    if (filter === 'completed') return todo.completed;
+    if (filter === 'incomplete') return !todo.completed;
+    return true;
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <SearchBar value={search || ''} onChange={onSearchChange} />
+        <FilterTabs value={filter || 'all'} onChange={onFilterChange} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {filteredTodos.map((todo) => (
+          <TodoCard key={todo.id} todo={todo} />
+        ))}
+      </div>
+
+      <Pagination
+        currentPage={page}
+        totalPages={Math.ceil(data.total / 10)}
+        onPageChange={onPageChange}
+      />
+    </div>
+  );
+};
+
+// src/components/todo/TodoCard.tsx
+import React from 'react';
+import { Link } from '@tanstack/react-router';
+import { CheckCircle2, Circle, Trash2, Edit3 } from 'lucide-react';
+import { Todo } from '../../services/api';
+import { useUpdateTodo, useDeleteTodo } from '../../hooks/useTodos';
+import { Button } from '../ui/Button';
+import { formatDate } from '../../utils/dateUtils';
+
+interface TodoCardProps {
+  todo: Todo;
+}
+
+export const TodoCard: React.FC<TodoCardProps> = ({ todo }) => {
+  const updateTodo = useUpdateTodo();
+  const deleteTodo = useDeleteTodo();
+
+  const handleToggleComplete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    updateTodo.mutate({
+      id: todo.id,
+      data: { completed: !todo.completed }
+    });
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.confirm('Are you sure you want to delete this todo?')) {
+      deleteTodo.mutate(todo.id);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <button
+          onClick={handleToggleComplete}
+          className="flex-shrink-0 mr-3 mt-1"
+          aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
+        >
+          {todo.completed ? (
+            <CheckCircle2 className="w-5 h-5 text-green-500" />
+          ) : (
+            <Circle className="w-5 h-5 text-gray-400 hover:text-green-500" />
+          )}
+        </button>
+        
+        <div className="flex-1 min-w-0">
+          <Link
+            to="/todos/$todoId"
+            params={{ todoId: todo.id }}
+            className="block"
+          >
+            <h3 className={`text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors ${
+              todo.completed ? 'line-through text-gray-500' : ''
+            }`}>
+              {todo.title}
+            </h3>
+          </Link>
+          
+          {todo.description && (
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              {todo.description}
+            </p>
+          )}
+          
+          <p className="text-xs text-gray-400 mt-2">
+            Created {formatDate(todo.createdAt)}
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-1 ml-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              // Open edit modal
+            }}
+            aria-label="Edit todo"
+          >
+            <Edit3 className="w-4 h-4" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            className="text-red-500 hover:text-red-700"
+            aria-label="Delete todo"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// src/router.tsx
+import { createRouter, createRoute, createRootRoute } from '@tanstack/react-router';
+import { QueryClient } from '@tanstack/react-query';
+import { RootLayout } from './components/layout/RootLayout';
+import { TodoListPage } from './pages/TodoListPage';
+import { TodoDetailPage } from './pages/TodoDetailPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { ErrorTestPage } from './pages/ErrorTestPage';
+
+const queryClient = new QueryClient();
+
+const rootRoute = createRootRoute({
+  component: RootLayout,
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: TodoListPage,
+});
+
+const todosRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/todos',
+  component: TodoListPage,
+});
+
+const todoDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/todos/$todoId',
+  component: TodoDetailPage,
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login',
+  component: LoginPage,
+});
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register',
+  component: RegisterPage,
+});
+
+const errorTestRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/error-test',
+  component: ErrorTestPage,
+});
+
+const routeTree = rootRoute.addChildren([
+  indexRoute,
+  todosRoute,
+  todoDetailRoute,
+  loginRoute,
+  registerRoute,
+  errorTestRoute,
+]);
+
+export const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: NotFoundPage,
+  context: {
+    queryClient,
+  },
+});
+
+declare module '@tanstack/react-router' {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+// src/components/common/ErrorBoundary.tsx
+import React from 'react';
+import { Button } from '../ui/Button';
+import { AlertTriangle } from 'lucide-react';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+export class ErrorBoundary extends React.Component<
+  React.PropsWithChildren<{}>,
+  ErrorBoundaryState
+> {
+  constructor(props: React.PropsWithChildren<{}>) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: undefined });
+  };
+  
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-6">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            
+            <h1 className="text-xl font-semibold text-gray-900 mb-4">
+              Something went wrong
+            </h1>
+            
+            <p className="text-gray-600 mb-6">
+              An unexpected error occurred. Please try again or contact support if the problem persists.
+            </p>
+            
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="text-left mb-6 p-4 bg-gray-100 rounded text-sm">
+                <summary className="cursor-pointer font-medium text-gray-700 mb-2">
+                  Error Details
+                </summary>
+                <pre className="text-red-600 whitespace-pre-wrap overflow-auto max-h-32">
+                  {this.state.error.message}
+                  {'\n'}
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button onClick={this.handleReset} className="flex-1">
+                Try Again
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => window.location.href = '/'}
+                className="flex-1"
+              >
+                Go Home
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+
+// src/App.tsx
+import React, { Suspense } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { RouterProvider } from '@tanstack/react-router';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { router } from './router';
+import './index.css';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    },
+  },
+});
+
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <Suspense 
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+            </div>
+          }
+        >
+          <RouterProvider router={router} />
+        </Suspense>
+      </ErrorBoundary>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
+}
+
+export default App;
+
+
+// src/components/common/SEOHead.tsx
+import { useEffect } from 'react';
+
+interface SEOHeadProps {
+  title: string;
+  description?: string;
+  keywords?: string;
+}
+
+export const SEOHead: React.FC<SEOHeadProps> = ({ 
+  title, 
+  description = 'A modern todo application built with React',
+  keywords = 'todo, tasks, productivity, react'
+}) => {
+  useEffect(() => {
+    document.title = `${title} | Todo App`;
+    
+    // Update meta description
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description);
+    } else {
+      metaDescription = document.createElement('meta');
+      metaDescription.setAttribute('name', 'description');
+      metaDescription.setAttribute('content', description);
+      document.head.appendChild(metaDescription);
+    }
+    
+    // Update meta keywords
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute('content', keywords);
+    } else {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      metaKeywords.setAttribute('content', keywords);
+      document.head.appendChild(metaKeywords);
+    }
+  }, [title, description, keywords]);
+
+  return null;
+};
+
+// src/hooks/useWebSocket.ts
+import { useEffect, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
+export const useWebSocket = () => {
+  const ws = useRef<WebSocket | null>(null);
+  const queryClient = useQueryClient();
+
+  const connect = useCallback(() => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+
+    ws.current = new WebSocket(`wss://api.oluwasetemi.dev/ws/tasks?token=${token}`);
+    
+    ws.current.onopen = () => {
+      console.log('WebSocket connected');
+    };
+    
+    ws.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'todo_created':
+        case 'todo_updated':
+        case 'todo_deleted':
+          // Invalidate todos query to refetch data
+          queryClient.invalidateQueries({ queryKey: ['todos'] });
+          
+          // Show notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Todo Updated', {
+              body: `A todo has been ${data.type.split('_')[1]}`,
+              icon: '/favicon.ico'
+            });
+          }
+          break;
+      }
+    };
+    
+    ws.current.onclose = () => {
+      console.log('WebSocket disconnected');
+      // Attempt to reconnect after 3 seconds
+      setTimeout(connect, 3000);
+    };
+    
+    ws.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  }, [queryClient]);
+
+  useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    
+    connect();
+    
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [connect]);
+
+  return {
+    isConnected: ws.current?.readyState === WebSocket.OPEN,
+  };
+};
