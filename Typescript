@@ -1,0 +1,102 @@
+function getFirstElement<T>(arr: T[]): T | undefined {
+  return arr.length > 0 ? arr[0] : undefined;
+}
+
+// Examples
+getFirstElement([1, 2, 3]); // 1
+getFirstElement<string>([]); // undefined
+
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  description?: string;
+  inStock: boolean;
+};
+
+// Example
+const item: Product = {
+  id: 1,
+  name: "Laptop",
+  price: 1200,
+  inStock: true
+};
+
+function filterByProperty<T, K extends keyof T>(
+  arr: T[],
+  property: K,
+  value: T[K]
+): T[] {
+  return arr.filter(item => item[property] === value);
+}
+
+// Example usage:
+const users = [
+  { name: "Ade", age: 25 },
+  { name: "Bisi", age: 30 }
+];
+
+const result = filterByProperty(users, "age", 25);
+// [{ name: "Ade", age: 25 }]
+
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+};
+
+// Pick specific properties
+type UserProfile = Pick<User, "id" | "name" | "email">;
+
+// Make all properties optional
+type UserUpdate = Partial<User>;
+
+// Examples
+const profile: UserProfile = {
+  id: 1,
+  name: "John",
+  email: "john@example.com"
+};
+
+const update: UserUpdate = {
+  email: "newemail@example.com"
+};
+
+// Using ANY (unsafe)
+function processAny(value: any) {
+  // No error even if method doesn't exist
+  console.log(value.toUpperCase());
+}
+
+// Using UNKNOWN (safe)
+function processUnknown(value: unknown) {
+  // Must check type first
+  if (typeof value === "string") {
+    console.log(value.toUpperCase());
+  } else {
+    console.log("Not a string");
+  }
+}
+
+// Examples
+processAny(123);        // runtime error possible
+processUnknown(123);    // safe
+
+type Status = "success" | "error";
+type Admin = User & { role: string };
+
+interface User {
+  id: number;
+  name: string;
+}
+
+interface Admin extends User {
+  role: string;
+}
+
+type IsArray<T> = T extends any[] ? true : false;
+
+// Examples
+type Test1 = IsArray<string[]>; // true
+type Test2 = IsArray<string>;   // false
