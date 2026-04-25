@@ -1,0 +1,69 @@
+// Question 1
+function getFirstElement<T>(arr: T[]): T | undefined {
+  return arr[0];
+}
+
+// Question 2
+type Product = {
+  id: number;
+  name: string;
+  price: number;
+  description?: string; // The '?' makes it optional
+  inStock: boolean;
+};
+
+// Question 3
+function filterByProperty<T, K extends keyof T>(items: T[], key: K, value: T[K]): T[] {
+  return items.filter(item => item[key] === value);
+}
+
+// Example usage:
+const users = [{ name: "Ade", age: 25 }, { name: "Bisi", age: 30 }];
+const filtered = filterByProperty(users, "age", 25); // [{ name: "Ade", age: 25 }]
+
+// Question 4
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+};
+
+// Use Pick to select specific keys
+type UserProfile = Pick<User, "id" | "name" | "email">;
+
+// Use Partial to make all keys optional
+type UserUpdate = Partial<User>;
+
+// Question 5
+function processAny(val: any) {
+  // any turns off type checking. This is dangerous!
+  // This will compile but might crash at runtime.
+  console.log(val.toUpperCase()); 
+}
+
+function processUnknown(val: unknown) {
+  // unknown is the type-safe counterpart to any.
+  // TypeScript forces you to perform a type check (type guard) before using it.
+  
+  if (typeof val === "string") {
+    console.log(val.toUpperCase()); // Now this is safe and allowed
+  } else {
+    console.log("Value is not a string, cannot process.");
+  }
+}
+
+// Question 6
+// Interface supports merging
+interface Window { title: string; }
+interface Window { height: number; } // Window now has both properties
+
+// Type is better for Unions
+type Status = "success" | "error" | "loading";
+
+// Question 7
+type IsArray<T> = T extends any[] ? true : false;
+
+// Testing:
+type Test1 = IsArray<string[]>; // true
+type Test2 = IsArray<string>;   // false
